@@ -1,14 +1,25 @@
 import { observer } from "mobx-react-lite";
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router";
 import { Button, Form, Segment } from "semantic-ui-react";
+import LoadingComponent from "../../../app/layout/LoadingComponent";
 import { useStore } from "../../../app/stores/stores";
-
+import { v4 as uuid } from "uuid";
+import { Link } from "react-router-dom";
 
 function ActivityForm() {
+  const history = useHistory();
+  const { activityStore } = useStore();
+  const {
+    createActivity,
+    updateActivity,
+    loading,
+    loadActivity,
+    loadingInitial,
+  } = activityStore;
+  const { id } = useParams<{ id: string }>();
 
-  const {activityStore} = useStore();
-  const {selectedActivity, closeForm, createActivity, updateActivity, loading} = activityStore;
-  const initialState = selectedActivity ?? {
+  const [activity, setActivity] = useState({
     id: "",
     title: "",
     category: "",
@@ -16,12 +27,26 @@ function ActivityForm() {
     date: "",
     city: "",
     venue: "",
-  };
+  });
 
-  const [activity, setActivity] = useState(initialState);
+  useEffect(() => {
+    if (id) loadActivity(id).then((activity) => setActivity(activity!));
+  }, [id, loadActivity]);
 
   function handSubmit() {
-    activity.id ? updateActivity(activity) : createActivity(activity);
+    if (activity.id.length === 0) {
+      let newActivity = {
+        ...activity,
+        id: uuid(),
+      };
+      createActivity(newActivity).then(() =>
+        history.push(`/activities/${newActivity.id}`)
+      );
+    } else {
+      updateActivity(activity).then(() =>
+        history.push(`/activities/${activity.id}`)
+      );
+    }
   }
 
   function handleInputChage(
@@ -30,6 +55,8 @@ function ActivityForm() {
     const { name, value } = event.target;
     setActivity({ ...activity, [name]: value });
   }
+
+  if (loadingInitial) return <LoadingComponent content="Loading...." />;
 
   return (
     <Segment clearing>
@@ -79,7 +106,8 @@ function ActivityForm() {
           content="Submit"
         />
         <Button
-          onClick={() => closeForm()}
+          as={Link}
+          to="/activities"
           floated="right"
           type="button"
           content="Cancel"
@@ -88,6 +116,5 @@ function ActivityForm() {
     </Segment>
   );
 }
-
 
 export default observer(ActivityForm);

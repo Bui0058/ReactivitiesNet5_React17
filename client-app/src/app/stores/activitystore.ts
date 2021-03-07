@@ -1,7 +1,6 @@
 import {  makeAutoObservable, runInAction } from "mobx";
 import agent from "../api/agent";
 import { Activity } from "../models/activity";
-import {v4 as uuid} from 'uuid';
 
 export default class ActivityStore {
   activityRegistry = new Map<string, Activity>();
@@ -20,11 +19,11 @@ export default class ActivityStore {
   }
 
   loadActivities = async () => {
+    this.loadingInitial = true;
     try {
       const activities = await agent.Activities.list();
       activities.forEach((activity) => {
-        activity.date = activity.date.split("T")[0];
-        this.activityRegistry.set(activity.id, activity);
+        this.setActivity(activity);
       }); //change the date of each activity (only take the date not time) to put on form.
       this.setLoadingInitial(false);
     } catch (error) {
@@ -33,31 +32,45 @@ export default class ActivityStore {
     }
   };
 
+  loadActivity = async (id: string) => {
+    let activity = this.getActivity(id);
+    if (activity) { // this is the case when activity also in the memory, no need to fetch from API.
+      this.selectedActivity = activity;
+      return activity;
+    } else { //when refresh the page or access to a link
+      this.loadingInitial = true;
+      try {
+        activity = await agent.Activities.details(id);
+        this.setActivity(activity);
+        runInAction(() => {
+          this.selectedActivity = activity;
+
+        })
+        this.setLoadingInitial(false);
+        return activity;        
+      } catch(error) {
+        console.log(error);  
+        this.setLoadingInitial(false);     
+      }
+    }
+  }
+
+  private setActivity = (activity: Activity) => {
+    activity.date = activity.date.split("T")[0];
+    this.activityRegistry.set(activity.id, activity);
+  }
+
+  private getActivity = (id: string) => {
+    return this.activityRegistry.get(id);
+  }
+
   setLoadingInitial = (state: boolean) => {
     this.loadingInitial = state;
   }; // this is a second  approach instead of runInActin() while updating an observalbe inside another action. 
   // by creating the own action of the behavior need to update. 
 
-  selectActivity = (id: string) => {
-      this.selectedActivity = this.activityRegistry.get(id);
-  }
-
-  cancelSelectedActivity = () => {
-      this.selectedActivity = undefined;
-  }
-
-  openForm = (id?: string) => {
-      id ? this.selectActivity(id) : this.cancelSelectedActivity();
-      this.editMode = true;
-  }
-
-  closeForm = () => {
-      this.editMode = false
-  }
-
-  createActivity = async (activity: Activity) => {
+   createActivity = async (activity: Activity) => {
       this.loading = true;
-      activity.id = uuid();
       try {
           await agent.Activities.create(activity);
           runInAction(() => {
@@ -99,8 +112,7 @@ export default class ActivityStore {
       try{
           await agent.Activities.delete(id);
           runInAction(() => {
-              this.activityRegistry.delete(id);
-            if (this.selectedActivity?.id === id) this.cancelSelectedActivity();
+            this.activityRegistry.delete(id);
             this.loading = false;        
 
           });
