@@ -10,6 +10,7 @@ import ActivityDetailedChat from './ActivityDetailedChat';
 import ActivityDetailedSidebar from './ActivityDetailedSidebar';
 
 
+
 function ActivityDetails() {
 
   const {activityStore} = useStore();

@@ -14,7 +14,6 @@ export default function HomePage() {
                     <Button as={Link} to='/activities' size='huge' inverted>
                         Take me to the Activities
                     </Button>
-
                 </Header>
             </Container>
 
