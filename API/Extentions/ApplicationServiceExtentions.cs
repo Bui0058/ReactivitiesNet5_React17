@@ -20,10 +20,12 @@ namespace API.Extentions
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
             });
+            //Add dbContext as service
             services.AddDbContext<DataContext>(opt =>
             {
-                opt.UseSqlite(config.GetConnectionString("DefaultConnection"));
-            });
+                opt.UseSqlite(config.GetConnectionString("DefaultConnection")); 
+            });//setup this "DefaultConnection" in appSettings.Dvelopment 
+            //to connect to the db
             services.AddCors(opt => {
                 opt.AddPolicy("CorsPolicy", policy => {
                     policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000");

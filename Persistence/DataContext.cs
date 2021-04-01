@@ -15,7 +15,8 @@ namespace Persistence
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.Entity<ActivityAttendee>(x => x.HasKey(aa => new {aa.AppUserId, aa.ActivityId}));
+            builder.Entity<ActivityAttendee>(x => x.HasKey(aa 
+                        => new {aa.AppUserId, aa.ActivityId}));
 
             builder.Entity<ActivityAttendee>()
                 .HasOne(u => u.AppUser)

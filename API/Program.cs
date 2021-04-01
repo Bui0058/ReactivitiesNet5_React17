@@ -21,7 +21,7 @@ namespace API
             var host = CreateHostBuilder(args).Build();
 
             using var scope = host.Services.CreateScope();
-            var services = scope.ServiceProvider;
+            var services = scope.ServiceProvider; //extract services to add db in the startup process
 
             try{
                 var context = services.GetRequiredService<DataContext>();
